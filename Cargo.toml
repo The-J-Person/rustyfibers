@@ -1,0 +1,13 @@
+[package]
+name = "raytracer"
+version = "0.0.1"
+authors = ["J"]
+
+[dependencies]
+gtk = "^0"
+vulkano = { git = "https://github.com/tomaka/vulkano.git" }#, rev = "bf739419" }
+
+glib = "^0"		# These
+gdk = "^0" 		# might
+gdk-pixbuf = "^0"	# not be
+cairo-rs = "^0"		# necessary

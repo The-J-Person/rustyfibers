@@ -39,8 +39,8 @@ impl Point {
 //
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub struct Vector {
-    pub point_a: Point,
-    pub point_b: Point,
+    pub p: Point,
+    // pub p_b: Point,
     pub x: f64,
     pub y: f64,
     pub z: f64,
@@ -48,10 +48,10 @@ pub struct Vector {
 
 impl Vector {
     pub fn new_blank() -> Vector {
-        Vector {point_a: Point::new_blank(), point_b: Point::new_blank(), x: 1., y: 1., z: 1.}
+        Vector {p: Point::new_blank(), x: 1., y: 1., z: 1.}
     }
     pub fn new(a: Point, b: Point, xn: f64,yn: f64,zn: f64) -> Vector {
-        Vector {point_a: a, point_b: b, x: xn, y: yn, z: zn}
+        Vector {p: a, x: xn, y: yn, z: zn}
     }
     pub fn dot_product(&self, other: &Vector) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z
@@ -63,7 +63,7 @@ impl Vector {
         let xn = self.y * other.z - self.z * other.y;
         let yn = self.z * other.x - self.x * other.z;
         let zn = self.x * other.y - self.y * other.x;
-        let pt_a = self.point_a.clone();
+        let pt_a = self.p.clone();
         let pt_b = Point::new(pt_a.x + xn, pt_a.y + yn, pt_a.z + zn);
         Vector::new(pt_a, pt_b, xn, yn , zn)
     }
@@ -72,19 +72,19 @@ impl Vector {
         self.x = self.x/length;
         self.y = self.y/length;
         self.z = self.z/length;
-        self.point_b.set_points(
-            self.point_a.x+self.x,
-            self.point_a.y+self.y,
-            self.point_a.z+self.z);
+        // self.p_b.set_points(
+        //     self.p.x+self.x,
+        //     self.p.y+self.y,
+        //     self.p.z+self.z);
     }
     pub fn multiply_scalar(&mut self, scalar: f64) {
         self.x = self.x*scalar;
         self.y = self.y*scalar;
         self.z = self.z*scalar;
-        self.point_b.set_points(
-            self.point_a.x+self.x,
-            self.point_a.y+self.y,
-            self.point_a.z+self.z);
+        // self.p_b.set_points(
+        //     self.p.x+self.x,
+        //     self.p.y+self.y,
+        //     self.p.z+self.z);
     }
     pub fn angle(&mut self, other: &mut Vector) -> f64 {
         self.normalize();
@@ -281,10 +281,10 @@ impl Matrix4D {
     }
     pub fn transpose(&mut self) {
         //TODO do not use
-        panic!();
+        unimplemented!()
     }
     pub fn to_array(&self) {
         //TODO do not use
-        panic!();
+        unimplemented!()
     }
 }

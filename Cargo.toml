@@ -4,8 +4,11 @@ version = "0.0.1"
 authors = ["J"]
 
 [dependencies]
-gtk = "^0"
-vulkano = { git = "https://github.com/tomaka/vulkano.git" }#, rev = "bf739419" }
+gtk = "^0" # GUI
+
+#vulkano = "^0" # Vulkan API bindings
+
+roots = "^0" # crate for various mathematical functions
 
 glib = "^0"		# These
 gdk = "^0" 		# might

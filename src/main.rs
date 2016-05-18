@@ -6,10 +6,14 @@
 #![crate_type = "bin"]
 
 extern crate gtk;
+extern crate roots;
 
 pub mod gui;
 pub mod cli;
 use std::env;
+
+pub mod math;
+pub mod fiber;
 
 fn main() {
     if env::args().count() > 1 {

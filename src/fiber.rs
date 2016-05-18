@@ -219,7 +219,89 @@ impl Geometry3D for Cone{
         unimplemented!()
     }
     fn collision_point(&self,v: Vector) -> Option<Point> {
-        unimplemented!()
+        //This function is disorderly and can probably be simplified.
+        //Somehow.
+        let t: f64;
+        let a = v.p.x;
+        let b = self.c.p.x;
+        let c = v.x;
+        let g = self.c.x;
+        let h = v.p.y;
+        let k = self.c.p.y;
+        let m = v.y;
+        let n = self.c.y;
+        let p = v.p.z;
+        let r = self.c.p.z;
+        let s = v.z;
+        let w = self.c.z;
+        let x = f64::cos(self.a);
+        let to_root = f64::sqrt((2.*a*c*g.powi(2)-2.*b*c*g.powi(2)-2.*a*c*x*g.powi(2)
+                                +2.*b*c*x*g.powi(2)-2.*h*m*x*g.powi(2)+2.*k*m*x*g.powi(2)
+                                -2.*p*s*x*g.powi(2)+2.*r*s*x*g.powi(2)+2.*c*h*n*g-2.*c*k*n*g
+                                +2.*a*m*n*g-2.*b*m*n*g+2.*c*p*w*g-2.*c*r*w*g+2.*a*s*w*g
+                                -2.*b*s*w*g+2.*h*m*n.powi(2)-2.*k*m*n.powi(2)+2.*p*s*w.powi(2)
+                                -2.*r*s*w.powi(2)+2.*m*n*p*w-2.*m*n*r*w+2.*h*n*s*w-2.*k*n*s*w
+                                -2.*a*c*n.powi(2)*x+2.*b*c*n.powi(2)*x-2.*h*m*n.powi(2)*x
+                                +2.*k*m*n.powi(2)*x-2.*a*c*w.powi(2)*x+2.*b*c*w.powi(2)*x
+                                -2.*h*m*w.powi(2)*x+2.*k*m*w.powi(2)*x-2.*p*s*w.powi(2)*x
+                                +2.*r*s*w.powi(2)*x-2.*n.powi(2)*p*s*x+2.*n.powi(2)*r*s*x).powi(2)
+                                -4.*(a.powi(2)*g.powi(2)+b.powi(2)*g.powi(2)-2.*a*b*g.powi(2)
+                                -a.powi(2)*x*g.powi(2)-b.powi(2)*x*g.powi(2)-h.powi(2)*x*g.powi(2)
+                                -k.powi(2)*x*g.powi(2)-p.powi(2)*x*g.powi(2)-r.powi(2)*x*g.powi(2)
+                                +2.*a*b*x*g.powi(2)+2.*h*k*x*g.powi(2)+2.*p*r*x*g.powi(2)
+                                +2.*a*h*n*g-2.*b*h*n*g-2.*a*k*n*g+2.*b*k*n*g+2.*a*p*w*g-2.*b*p*w*g
+                                -2.*a*r*w*g+2.*b*r*w*g+h.powi(2)*n.powi(2)+k.powi(2)*n.powi(2)
+                                -2.*h*k*n.powi(2)+p.powi(2)*w.powi(2)+r.powi(2)*w.powi(2)
+                                -2.*p*r*w.powi(2)+2.*h*n*p*w-2.*k*n*p*w-2.*h*n*r*w+2.*k*n*r*w
+                                -a.powi(2)*n.powi(2)*x-b.powi(2)*n.powi(2)*x-h.powi(2)*n.powi(2)*x
+                                -k.powi(2)*n.powi(2)*x+2.*a*b*n.powi(2)*x+2.*h*k*n.powi(2)*x
+                                -n.powi(2)*p.powi(2)*x-n.powi(2)*r.powi(2)*x-a.powi(2)*w.powi(2)*x
+                                -b.powi(2)*w.powi(2)*x-h.powi(2)*w.powi(2)*x-k.powi(2)*w.powi(2)*x
+                                -p.powi(2)*w.powi(2)*x-r.powi(2)*w.powi(2)*x+2.*a*b*w.powi(2)*x
+                                +2.*h*k*w.powi(2)*x+2.*p*r*w.powi(2)*x
+                                +2.*n.powi(2)*p*r*x)*(c.powi(2)*g.powi(2)-c.powi(2)*x*g.powi(2)
+                                -m.powi(2)*x*g.powi(2)-s.powi(2)*x*g.powi(2)+2.*c*m*n*g+2.*c*s*w*g
+                                +m.powi(2)*n.powi(2)+s.powi(2)*w.powi(2)
+                                +2.*m*n*s*w-c.powi(2)*n.powi(2)*x-m.powi(2)*n.powi(2)*x
+                                -n.powi(2)*s.powi(2)*x-c.powi(2)*w.powi(2)*x-m.powi(2)*w.powi(2)*x
+                                -s.powi(2)*w.powi(2)*x));
+        let top = -2.*a*c*g.powi(2)+2.*b*c*g.powi(2)+2.*a*c*x*g.powi(2)-2.*b*c*x*g.powi(2)
+                    +2.*h*m*x*g.powi(2)-2.*k*m*x*g.powi(2)+2.*p*s*x*g.powi(2)-2.*r*s*x*g.powi(2)
+                    -2.*c*h*n*g+2.*c*k*n*g-2.*a*m*n*g+2.*b*m*n*g-2.*c*p*w*g+2.*c*r*w*g-2.*a*s*w*g
+                    +2.*b*s*w*g-2.*h*m*n.powi(2)+2.*k*m*n.powi(2)-2.*p*s*w.powi(2)+2.*r*s*w.powi(2)
+                    -2.*m*n*p*w+2.*m*n*r*w-2.*h*n*s*w+2.*k*n*s*w+2.*a*c*n.powi(2)*x
+                    -2.*b*c*n.powi(2)*x+2.*h*m*n.powi(2)*x-2.*k*m*n.powi(2)*x+2.*a*c*w.powi(2)*x
+                    -2.*b*c*w.powi(2)*x+2.*h*m*w.powi(2)*x-2.*k*m*w.powi(2)*x+2.*p*s*w.powi(2)*x
+                    -2.*r*s*w.powi(2)*x+2.*n.powi(2)*p*s*x-2.*n.powi(2)*r*s*x;
+        let bottom = 2.*(c.powi(2)*g.powi(2)-c.powi(2)*x*g.powi(2)-m.powi(2)*x*g.powi(2)
+                    -s.powi(2)*x*g.powi(2)+2.*c*m*n*g+2.*c*s*w*g+m.powi(2)*n.powi(2)
+                    +s.powi(2)*w.powi(2)+2.*m*n*s*w-c.powi(2)*n.powi(2)*x-m.powi(2)*n.powi(2)*x
+                    -n.powi(2)*s.powi(2)*x-c.powi(2)*w.powi(2)*x-m.powi(2)*w.powi(2)*x
+                    -s.powi(2)*w.powi(2)*x);
+
+        let t1 = (top+to_root)/(bottom);
+        let t2 = (top-to_root)/(bottom);
+
+        if t1>0. {
+            if t2>0. {
+                if t1 < t2 {
+                    t = t1;
+                }
+                else {
+                    t = t2;
+                }
+            }
+            else {
+                t = t1;
+            }
+        }
+        else if t2>0. {
+            t = t2;
+        }
+        else {
+            return None;
+        }
+        return Some(Point {x: v.p.x+v.x*t,y: v.p.y+v.y*t,z: v.p.z+v.z*t});
     }
     fn normal(&self,p: Point) -> Option<Vector> {
         unimplemented!()

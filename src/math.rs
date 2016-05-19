@@ -50,7 +50,10 @@ impl Vector {
     pub fn new_blank() -> Vector {
         Vector {p: Point::new_blank(), x: 1., y: 1., z: 1.}
     }
-    pub fn new(a: Point, b: Point, xn: f64,yn: f64,zn: f64) -> Vector {
+    // pub fn new(a: Point, b: Point, xn: f64,yn: f64,zn: f64) -> Vector {
+    //     Vector {p: a, x: xn, y: yn, z: zn}
+    // }
+    pub fn new(a: Point, xn: f64,yn: f64,zn: f64) -> Vector {
         Vector {p: a, x: xn, y: yn, z: zn}
     }
     pub fn dot_product(&self, other: &Vector) -> f64 {
@@ -64,8 +67,8 @@ impl Vector {
         let yn = self.z * other.x - self.x * other.z;
         let zn = self.x * other.y - self.y * other.x;
         let pt_a = self.p.clone();
-        let pt_b = Point::new(pt_a.x + xn, pt_a.y + yn, pt_a.z + zn);
-        Vector::new(pt_a, pt_b, xn, yn , zn)
+        //let pt_b = Point::new(pt_a.x + xn, pt_a.y + yn, pt_a.z + zn);
+        Vector::new(pt_a, xn, yn , zn)
     }
     pub fn normalize(&mut self) {
         let length = self.length();

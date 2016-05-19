@@ -8,6 +8,7 @@ extern crate gtk;
 
 use gtk::prelude::*;
 
+#[allow(unused_variables)] //"button" is required for gtk but is 'unused'
 fn clicked_exit(button: &gtk::Button){
     //End all threads...?
     gtk::main_quit();

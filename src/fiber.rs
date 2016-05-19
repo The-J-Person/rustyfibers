@@ -307,7 +307,7 @@ impl Geometry3D for Cone{
         let r = self.c.p.z;
         let s = v.z;
         let w = self.c.z;
-        let x = f64::cos(self.a);
+        let x = (f64::cos(self.a).powi(2) as f32) as f64; //Stupid workaround for rounding errors
         let to_root = f64::sqrt((2.*a*c*g.powi(2)-2.*b*c*g.powi(2)-2.*a*c*x*g.powi(2)
                                 +2.*b*c*x*g.powi(2)-2.*h*m*x*g.powi(2)+2.*k*m*x*g.powi(2)
                                 -2.*p*s*x*g.powi(2)+2.*r*s*x*g.powi(2)+2.*c*h*n*g-2.*c*k*n*g
@@ -379,5 +379,63 @@ impl Geometry3D for Cone{
     #[allow(unused_variables)]
     fn normal(&self,p: Point) -> Option<Vector> {
         unimplemented!()
+    }
+}
+
+
+//
+// Tests
+//
+
+#[test]
+fn torus_sanity_check() {
+    let ray = Vector {p: Point{x: 0.,y: 8.,z: 0.},x: 0.,y: -1.,z: 0.};
+    let torus = Torus {R: 2., r: 1., phi_max: f64::consts::PI};
+    let point = torus.collision_point(ray);
+    match point {
+        Some(p) => {
+            assert_eq!(p.x,0.);
+            assert_eq!(p.y,3.);
+            assert_eq!(p.z,0.);
+        },
+        _ => {
+            panic!();
+        },
+    }
+}
+
+#[test]
+fn cylinder_sanity_check() {
+    let ray = Vector {p: Point{x: 5.,y: 0.,z: 0.},x: -1.,y: 0.,z: 0.};
+    let cylinder = Cylinder {c: Vector{p: Point{x: 0.,y: 0., z: 0.},x: 0., y:0., z: 1.}, r: 1.};
+    let point = cylinder.collision_point(ray);
+    match point {
+        Some(p) => {
+            println!("{:?}", p );
+            assert_eq!(p.x,1.);
+            assert_eq!(p.y,0.);
+            assert_eq!(p.z,0.);
+        },
+        _ => {
+            panic!();
+        },
+    }
+}
+
+#[test]
+fn cone_sanity_check() {
+    let ray = Vector {p: Point{x: 0.,y: 5.,z: 1.},x: 0.,y: -1.,z: 0.};
+    let cone = Cone {c: Vector{p: Point{x: 0.,y: 0., z: 0.},x: 0., y:0., z: 1.}, a: f64::consts::PI/4.};
+    let point = cone.collision_point(ray);
+    match point {
+        Some(p) => {
+            println!("{:?}", p );
+            assert_eq!(p.x,0.);
+            assert_eq!(p.y,1.);
+            assert_eq!(p.z,1.);
+        },
+        _ => {
+            panic!();
+        },
     }
 }

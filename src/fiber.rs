@@ -63,6 +63,7 @@ impl Geometry3D for Torus{
         }
         true
     }
+    #[allow(unused_variables)]
     fn check_collision(&self,v: Vector) -> bool {
         unimplemented!()
     }
@@ -186,16 +187,86 @@ struct Cylinder {
 }
 
 impl Geometry3D for Cylinder{
+    #[allow(unused_variables)]
     fn point_is_on_surface(&self,p: Point) -> bool {
         //let x = ( p.x - self.c.p.x - (self.c.x*p.x-self.c.p.x)*self.c.x).powi(2)-self.r.powi(2);
         unimplemented!()
     }
+    #[allow(unused_variables)]
     fn check_collision(&self,v: Vector) -> bool {
         unimplemented!()
     }
     fn collision_point(&self,v: Vector) -> Option<Point> {
-        unimplemented!()
+        //This function is disorderly and can probably be simplified.
+        //Somehow.
+        let t: f64;
+        let x = self.c.x;
+        let y = self.c.y;
+        let z = self.c.z;
+        let a = self.c.p.x;
+        let b = v.p.x;
+        let c = v.x;
+        let h = self.c.p.y;
+        let q = v.p.y;
+        let j = v.y;
+        let k = self.c.p.z;
+        let m = v.p.z;
+        let n = v.z;
+        let r = self.r;
+        let to_root = f64::sqrt((-2.*a*c*y.powi(2)-2.*a*c*z.powi(2)+2.*a*j*x*y+2.*a*n*x*z
+                                +2.*b*c*y.powi(2)+2.*b*c*z.powi(2)-2.*b*j*x*y-2.*b*n*x*z
+                                +2.*c*h*x*y+2.*c*k*x*z-2.*c*m*x*z-2.*c*q*x*y-2.*h*j*x.powi(2)
+                                -2.*h*j*z.powi(2)+2.*h*n*y*z+2.*j*k*y*z-2.*j*m*y*z+2.*j*q*x.powi(2)
+                                +2.*j*q*z.powi(2)-2.*k*n*x.powi(2)-2.*k*n*y.powi(2)
+                                +2.*m*n*x.powi(2)+2.*m*n*y.powi(2)-2.*n*q*y*z).powi(2)
+                                -4.*(c.powi(2)*y.powi(2)+c.powi(2)*z.powi(2)-2.*c*j*x*y
+                                -2.*c*n*x*z+j.powi(2)*x.powi(2)+j.powi(2)*z.powi(2)
+                                -2.*j*n*y*z+n.powi(2)*x.powi(2)
+                                +n.powi(2)*y.powi(2))*(a.powi(2)*y.powi(2)+a.powi(2)*z.powi(2)
+                                -2.*a*b*y.powi(2)-2.*a*b*z.powi(2)-2.*a*h*x*y-2.*a*k*x*z
+                                +2.*a*m*x*z+2.*a*q*x*y+b.powi(2)*y.powi(2)+b.powi(2)*z.powi(2)
+                                +2.*b*h*x*y+2.*b*k*x*z-2.*b*m*x*z-2.*b*q*x*y+h.powi(2)*x.powi(2)
+                                +h.powi(2)*z.powi(2)-2.*h*k*y*z+2.*h*m*y*z-2.*h*q*x.powi(2)
+                                -2.*h*q*z.powi(2)+k.powi(2)*x.powi(2)+k.powi(2)*y.powi(2)
+                                -2.*k*m*x.powi(2)-2.*k*m*y.powi(2)+2.*k*q*y*z+m.powi(2)*x.powi(2)
+                                +m.powi(2)*y.powi(2)-2.*m*q*y*z+q.powi(2)*x.powi(2)
+                                +q.powi(2)*z.powi(2)-r.powi(2)));
+        let t1 = (to_root+2.*a*c*y.powi(2)+2.*a*c*z.powi(2)-2.*a*j*x*y-2.*a*n*x*z-2.*b*c*y.powi(2)
+                    -2.*b*c*z.powi(2)+2.*b*j*x*y+2.*b*n*x*z-2.*c*h*x*y-2.*c*k*x*z+2.*c*m*x*z
+                    +2.*c*q*x*y+2.*h*j*x.powi(2)+2.*h*j*z.powi(2)-2.*h*n*y*z-2.*j*k*y*z+2.*j*m*y*z
+                    -2.*j*q*x.powi(2)-2.*j*q*z.powi(2)+2.*k*n*x.powi(2)+2.*k*n*y.powi(2)
+                    -2.*m*n*x.powi(2)-2.*m*n*y.powi(2)+2.*n*q*y*z)/(2.*(c.powi(2)*y.powi(2)
+                    +c.powi(2)*z.powi(2)-2.*c*j*x*y-2.*c*n*x*z+j.powi(2)*x.powi(2)
+                    +j.powi(2)*z.powi(2)-2.*j*n*y*z+n.powi(2)*x.powi(2)+n.powi(2)*y.powi(2)));
+        let t2 = (-to_root+2.*a*c*y.powi(2)+2.*a*c*z.powi(2)-2.*a*j*x*y-2.*a*n*x*z-2.*b*c*y.powi(2)
+                    -2.*b*c*z.powi(2)+2.*b*j*x*y+2.*b*n*x*z-2.*c*h*x*y-2.*c*k*x*z+2.*c*m*x*z
+                    +2.*c*q*x*y+2.*h*j*x.powi(2)+2.*h*j*z.powi(2)-2.*h*n*y*z-2.*j*k*y*z+2.*j*m*y*z
+                    -2.*j*q*x.powi(2)-2.*j*q*z.powi(2)+2.*k*n*x.powi(2)+2.*k*n*y.powi(2)
+                    -2.*m*n*x.powi(2)-2.*m*n*y.powi(2)+2.*n*q*y*z)/(2.*(c.powi(2)*y.powi(2)
+                    +c.powi(2)*z.powi(2)-2.*c*j*x*y-2.*c*n*x*z+j.powi(2)*x.powi(2)
+                    +j.powi(2)*z.powi(2)-2.*j*n*y*z+n.powi(2)*x.powi(2)+n.powi(2)*y.powi(2)));
+        if t1>0. {
+            if t2>0. {
+                if t1 < t2 {
+                    t = t1;
+                }
+                else {
+                    t = t2;
+                }
+            }
+            else {
+                t = t1;
+            }
+        }
+        else if t2>0. {
+            t = t2;
+        }
+        else {
+            return None;
+        }
+        return Some(Point {x: v.p.x+v.x*t,y: v.p.y+v.y*t,z: v.p.z+v.z*t});
     }
+    #[allow(unused_variables)]
     fn normal(&self,p: Point) -> Option<Vector> {
         unimplemented!()
     }
@@ -212,9 +283,11 @@ struct Cone {
 }
 
 impl Geometry3D for Cone{
+    #[allow(unused_variables)]
     fn point_is_on_surface(&self,p: Point) -> bool {
         unimplemented!()
     }
+    #[allow(unused_variables)]
     fn check_collision(&self,v: Vector) -> bool {
         unimplemented!()
     }
@@ -303,6 +376,7 @@ impl Geometry3D for Cone{
         }
         return Some(Point {x: v.p.x+v.x*t,y: v.p.y+v.y*t,z: v.p.z+v.z*t});
     }
+    #[allow(unused_variables)]
     fn normal(&self,p: Point) -> Option<Vector> {
         unimplemented!()
     }

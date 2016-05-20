@@ -56,12 +56,35 @@ impl Torus{
     ///Returns the plane by which the ray can enter the Torus for the first time.
     ///Used for detecting which segment of the fiber the ray is on.
     fn entry_plane(&self) -> Plane {
-        unimplemented!()
+        let xa = (self.R+self.r*f64::cos(0.))*f64::cos(0.);
+        let ya = (self.R+self.r*f64::cos(0.))*f64::sin(0.);
+        let za = self.r*f64::sin(0.);
+        //Swapping point b and c is crucial to have a consistent direction for the plane's normal.
+        let xc = (self.R+self.r*f64::cos(f64::consts::PI/2.))*f64::cos(0.);
+        let yc = (self.R+self.r*f64::cos(f64::consts::PI/2.))*f64::sin(0.);
+        let zc = self.r*f64::sin(f64::consts::PI/2.);
+        let xb = (self.R+self.r*f64::cos(f64::consts::PI))*f64::cos(0.);
+        let yb = (self.R+self.r*f64::cos(f64::consts::PI))*f64::sin(0.);
+        let zb = self.r*f64::sin(f64::consts::PI);
+        Plane{a: Point{x: xa, y: ya, z: za},
+            b: Point{x: xb, y: yb, z: zb},
+            c: Point{x: xc, y: yc, z: zc}}
     }
     ///Returns the plane by which the ray can exit the Torus for the first time.
     ///Used for detecting which segment of the fiber the ray is on.
     fn exit_plane(&self) -> Plane {
-        unimplemented!()
+        let xa = (self.R+self.r*f64::cos(0.))*f64::cos(self.phi_max);
+        let ya = (self.R+self.r*f64::cos(0.))*f64::sin(self.phi_max);
+        let za = self.r*f64::sin(0.);
+        let xb = (self.R+self.r*f64::cos(f64::consts::PI/2.))*f64::cos(self.phi_max);
+        let yb = (self.R+self.r*f64::cos(f64::consts::PI/2.))*f64::sin(self.phi_max);
+        let zb = self.r*f64::sin(f64::consts::PI/2.);
+        let xc = (self.R+self.r*f64::cos(f64::consts::PI))*f64::cos(self.phi_max);
+        let yc = (self.R+self.r*f64::cos(f64::consts::PI))*f64::sin(self.phi_max);
+        let zc = self.r*f64::sin(f64::consts::PI);
+        Plane{a: Point{x: xa, y: ya, z: za},
+            b: Point{x: xb, y: yb, z: zb},
+            c: Point{x: xc, y: yc, z: zc}}
     }
 }
 
@@ -111,7 +134,7 @@ impl Geometry3D for Torus{
         }
         let mut plausible: Vec<f64> = Vec::new();
         for r in roots_t {
-            if r<=0. || self.point_is_on_surface(Point {x: v.p.x+v.x*r,y: v.p.y+v.y*r,z: v.p.z+v.z*r}) {
+            if r<=0.+f64::EPSILON || !self.point_is_on_surface(Point {x: v.p.x+v.x*r,y: v.p.y+v.y*r,z: v.p.z+v.z*r}) {
                 continue;
             }
             plausible.push(r);
@@ -228,8 +251,8 @@ impl Geometry3D for Cylinder{
                     -2.*m*n*x.powi(2)-2.*m*n*y.powi(2)+2.*n*q*y*z)/(2.*(c.powi(2)*y.powi(2)
                     +c.powi(2)*z.powi(2)-2.*c*j*x*y-2.*c*n*x*z+j.powi(2)*x.powi(2)
                     +j.powi(2)*z.powi(2)-2.*j*n*y*z+n.powi(2)*x.powi(2)+n.powi(2)*y.powi(2)));
-        if t1>0. {
-            if t2>0. {
+        if t1>0.+f64::EPSILON {
+            if t2>0.+f64::EPSILON {
                 if t1 < t2 {
                     t = t1;
                 }
@@ -241,7 +264,7 @@ impl Geometry3D for Cylinder{
                 t = t1;
             }
         }
-        else if t2>0. {
+        else if t2>0.+f64::EPSILON {
             t = t2;
         }
         else {
@@ -338,8 +361,8 @@ impl Geometry3D for Cone{
         let t1 = (top+to_root)/(bottom);
         let t2 = (top-to_root)/(bottom);
 
-        if t1>0. {
-            if t2>0. {
+        if t1>0.+f64::EPSILON {
+            if t2>0.+f64::EPSILON {
                 if t1 < t2 {
                     t = t1;
                 }
@@ -351,7 +374,7 @@ impl Geometry3D for Cone{
                 t = t1;
             }
         }
-        else if t2>0. {
+        else if t2>0.+f64::EPSILON {
             t = t2;
         }
         else {
@@ -371,7 +394,7 @@ impl Geometry3D for Cone{
 //
 
 #[test]
-fn torus_sanity_check() {
+fn torus_basic_collision() {
     let ray = Vector {p: Point{x: 0.,y: 8.,z: 0.},x: 0.,y: -1.,z: 0.};
     let torus = Torus {R: 2., r: 1., phi_max: f64::consts::PI};
     let point = torus.collision_point(ray);
@@ -387,14 +410,29 @@ fn torus_sanity_check() {
     }
 }
 
+// #[test]
+// fn torus_plane_generation() {
+//     let torus = Torus {R: 2., r: 1., phi_max: f64::consts::PI/2.};
+//     let gp = Point::new_blank();
+//     let p1 = torus.entry_plane();
+//     let p2 = torus.exit_plane();
+//     let c1 = Plane{a: Point{x: 3.,y: 0.,z: 0.},b: Point{x: 2.,y: 0.,z: 1.},c: Point{x: 1.,y: 0.,z: 0.}};
+//     let c2 = Plane{a: Point{x: -3.,y: 0.,z: 0.},b: Point{x: -2.,y: 0.,z: 1.},c: Point{x: -1.,y: 0.,z: 0.}};
+//     // println!("{:?}", p1 );
+//     // println!("{:?}", p2 );
+//     println!("{:?}", p1.normal(gp) );
+//     println!("{:?}", p2.normal(gp) );
+
+//    panic!();
+// }
+
 #[test]
-fn cylinder_sanity_check() {
+fn cylinder_basic_collision() {
     let ray = Vector {p: Point{x: 5.,y: 0.,z: 0.},x: -1.,y: 0.,z: 0.};
     let cylinder = Cylinder {c: Vector{p: Point{x: 0.,y: 0., z: 0.},x: 0., y:0., z: 1.}, r: 1.};
     let point = cylinder.collision_point(ray);
     match point {
         Some(p) => {
-            println!("{:?}", p );
             assert_eq!(p.x,1.);
             assert_eq!(p.y,0.);
             assert_eq!(p.z,0.);
@@ -406,7 +444,7 @@ fn cylinder_sanity_check() {
 }
 
 #[test]
-fn cone_sanity_check() {
+fn cone_basic_collision() {
     let ray = Vector {p: Point{x: 0.,y: 5.,z: 1.},x: 0.,y: -1.,z: 0.};
     let cone = Cone {c: Vector{p: Point{x: 0.,y: 0., z: 0.},x: 0., y:0., z: 1.}, a: f64::consts::PI/4.};
     let point = cone.collision_point(ray);

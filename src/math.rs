@@ -62,9 +62,6 @@ impl Vector {
     pub fn dot_product(&self, other: &Vector) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
-    pub fn length(&self) -> f64 {
-        f64::sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
-    }
     pub fn cross_product(&self, other: &Vector) -> Vector {
         let xn = self.y * other.z - self.z * other.y;
         let yn = self.z * other.x - self.x * other.z;
@@ -72,6 +69,9 @@ impl Vector {
         let pt_a = self.p.clone();
         //let pt_b = Point::new(pt_a.x + xn, pt_a.y + yn, pt_a.z + zn);
         Vector::new(pt_a, xn, yn , zn)
+    }
+    pub fn length(&self) -> f64 {
+        f64::sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
     }
     pub fn normalize(&mut self) {
         let length = self.length();
@@ -302,9 +302,9 @@ impl Matrix4D {
 //
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub struct Plane {
-    a: Point,
-    b: Point,
-    c: Point,
+    pub a: Point,
+    pub b: Point,
+    pub c: Point,
 }
 
 impl Plane {
@@ -332,10 +332,18 @@ impl Plane {
                         y: v.p.y+v.y*result[(0,0)],
                         z: v.p.z+v.z*result[(0,0)]});
     }
+    pub fn normal(&self, p: Point) -> Vector {
+        let va = Vector::new(Point::new_blank(),self.b.x-self.a.x,self.b.y-self.a.y,self.b.z-self.a.z);
+        let vb = Vector::new(Point::new_blank(),self.c.x-self.a.x,self.c.y-self.a.y,self.c.z-self.a.z);
+        let mut result = va.cross_product(&vb);
+        result.normalize();
+        result.p = p;
+        return result;
+    }
 }
 
 #[test]
-fn plane_sanity_check() {
+fn plane_basic_collision() {
     let plane = Plane{a: Point{x: 1.,y: 1.,z: 0.}, b: Point{x: 1.,y: 0.,z: 0.}, c: Point{x: 0.,y: 1.,z: 0.}};
     let ray = Vector {p: Point{x: 0.,y: 0.,z: 5.},x: 0.,y: 0.,z: -1.};
     let point = plane.intersect(ray);

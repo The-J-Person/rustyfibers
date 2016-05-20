@@ -7,7 +7,10 @@
 /// CubicSplineInterpolation
 ///
 
+extern crate nalgebra;
+
 use std::f64;
+use nalgebra::{Inverse,DMatrix3};
 
 //
 // Point type
@@ -289,5 +292,62 @@ impl Matrix4D {
     pub fn to_array(&self) {
         //TODO do not use
         unimplemented!()
+    }
+}
+
+
+//
+// Plane type
+// Represented as a+(b-a)*n+(c-a)*m
+//
+#[derive(PartialEq, Copy, Clone, Debug)]
+pub struct Plane {
+    a: Point,
+    b: Point,
+    c: Point,
+}
+
+impl Plane {
+    //An intersection would be v.p+v(x,y,z)*t=a+(b-a)*n+(c-a)*m
+    pub fn intersect(&self,v: Vector) -> Option<Point> {
+        let vals = vec![-v.x,self.b.x-self.a.x,self.c.x-self.a.x,
+                        -v.y,self.b.y-self.a.y,self.c.y-self.a.y,
+                        -v.z,self.b.z-self.a.z,self.c.z-self.a.z];
+        let to_mult = vec![v.p.x-self.a.x,
+                            v.p.y-self.a.y,
+                            v.p.z-self.a.z];
+        let mat = DMatrix3::from_row_vector(3,3,&vals);
+        let mat_mult = DMatrix3::from_row_vector(3,1,&to_mult);
+        let inv = mat.inverse();
+        let result: DMatrix3<f64>;
+        match inv {
+            Some(inverted) => {
+                result = inverted*mat_mult;
+            },
+            None => {
+                return None;
+            }
+        }
+        return Some(Point {x: v.p.x+v.x*result[(0,0)],
+                        y: v.p.y+v.y*result[(0,0)],
+                        z: v.p.z+v.z*result[(0,0)]});
+    }
+}
+
+#[test]
+fn plane_sanity_check() {
+    let plane = Plane{a: Point{x: 1.,y: 1.,z: 0.}, b: Point{x: 1.,y: 0.,z: 0.}, c: Point{x: 0.,y: 1.,z: 0.}};
+    let ray = Vector {p: Point{x: 0.,y: 0.,z: 5.},x: 0.,y: 0.,z: -1.};
+    let point = plane.intersect(ray);
+    match point {
+        Some(p) => {
+            println!("{:?}", p );
+            assert_eq!(p.x,0.);
+            assert_eq!(p.y,0.);
+            assert_eq!(p.z,0.);
+        },
+        _ => {
+            panic!();
+        },
     }
 }

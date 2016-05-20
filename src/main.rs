@@ -7,6 +7,7 @@
 
 extern crate gtk;
 extern crate roots;
+extern crate nalgebra;
 
 pub mod gui;
 pub mod cli;

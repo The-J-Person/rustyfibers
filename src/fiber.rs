@@ -7,8 +7,7 @@ extern crate roots;
 use roots::Roots;
 use roots::find_roots_quartic;
 
-use math::Point;
-use math::Vector;
+use math::{Point,Vector,Plane};
 use std::f64;
 
 trait Geometry3D {
@@ -39,8 +38,8 @@ pub struct Torus {
 }
 
 impl Torus{
-    //Returns theta and phi angle values if the given point is on the torus surface
-    //If the point is not on the torus surface, returns "None"
+    ///Returns theta and phi angle values if the given point is on the torus surface
+    ///If the point is not on the torus surface, returns "None"
     fn theta_phi(&self,p: Point) -> Option<(f64,f64)> {
         let theta1 = f64::asin(p.z); //Possible solution for theta
         let theta2 = f64::consts::PI - theta1; //Another possible solution for theta
@@ -53,6 +52,16 @@ impl Torus{
             return Some((theta2,phi2));
         }
         None
+    }
+    ///Returns the plane by which the ray can enter the Torus for the first time.
+    ///Used for detecting which segment of the fiber the ray is on.
+    fn entry_plane(&self) -> Plane {
+        unimplemented!()
+    }
+    ///Returns the plane by which the ray can exit the Torus for the first time.
+    ///Used for detecting which segment of the fiber the ray is on.
+    fn exit_plane(&self) -> Plane {
+        unimplemented!()
     }
 }
 
@@ -76,73 +85,47 @@ impl Geometry3D for Torus{
         let B = 2.*(2.*a.dot_product(&v)*a.dot_product(&v)+K+2.*R2*v.z*v.z);
         let C = 4.*(K*a.dot_product(&v)+2.*R2*a.z*v.z);
         let D = K*K+4.*R2*(a.z*a.z-self.r*self.r);
-        let t: f64;
+        let mut roots_t = Vec::new();
         match find_roots_quartic(1., A, B, C, D) {
             Roots::Four(roots) => {
-                let mut temp = f64::INFINITY;
-                if roots[0]>0. && roots[0]<temp {
-                    temp=roots[0];
-                }
-                if roots[1]>0. && roots[1]<temp {
-                    temp=roots[1];
-                }
-                if roots[2]>0. && roots[2]<temp {
-                    temp=roots[2];
-                }
-                if roots[3]>0. && roots[3]<temp {
-                    temp=roots[3];
-                }
-                if temp==f64::INFINITY {
-                    return None;
-                }
-                else {
-                    t = temp;
-                }
+                roots_t.push(roots[0]);
+                roots_t.push(roots[1]);
+                roots_t.push(roots[2]);
+                roots_t.push(roots[3]);
             },
             Roots::Three(roots) => {
-                let mut temp = f64::INFINITY;
-                if roots[0]>0. && roots[0]<temp {
-                    temp=roots[0];
-                }
-                if roots[1]>0. && roots[1]<temp {
-                    temp=roots[1];
-                }
-                if roots[2]>0. && roots[2]<temp {
-                    temp=roots[2];
-                }
-                if temp==f64::INFINITY {
-                    return None;
-                }
-                else {
-                    t = temp;
-                }
+                roots_t.push(roots[0]);
+                roots_t.push(roots[1]);
+                roots_t.push(roots[2]);
             },
             Roots::Two(roots) => {
-                let mut temp = f64::INFINITY;
-                if roots[0]>0. && roots[0]<temp {
-                    temp=roots[0];
-                }
-                if roots[1]>0. && roots[1]<temp {
-                    temp=roots[1];
-                }
-                if temp==f64::INFINITY {
-                    return None;
-                }
-                else {
-                    t = temp;
-                }
+                roots_t.push(roots[0]);
+                roots_t.push(roots[1]);
             },
             Roots::One(roots) => {
-                if roots[0]>0. {
-                    t = roots[0];
-                }
-                else {
-                    return None;
-                }
+                roots_t.push(roots[0]);
             },
             _ => {
                 return None;
             },
+        }
+        let mut plausible: Vec<f64> = Vec::new();
+        for r in roots_t {
+            if r<=0. || self.point_is_on_surface(Point {x: v.p.x+v.x*r,y: v.p.y+v.y*r,z: v.p.z+v.z*r}) {
+                continue;
+            }
+            plausible.push(r);
+        }
+
+        let mut t = f64::INFINITY;
+
+        for r in plausible {
+            if t>r {
+                t = r;
+            }
+        }
+        if t==f64::INFINITY {
+            return None;
         }
         return Some(Point {x: v.p.x+v.x*t,y: v.p.y+v.y*t,z: v.p.z+v.z*t});
     }

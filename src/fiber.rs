@@ -72,7 +72,7 @@ impl Geometry3D for Torus{
         unimplemented!()
     }
     #[allow(non_snake_case)]
-    pub fn collision_point(&self,v: Vector) -> Option<Point> {
+    fn collision_point(&self,v: Vector) -> Option<Point> {
         let R2 = self.R*self.R;
         let a = Vector{p: Point{x: 0.,y: 0.,z: 0.},x: v.p.x, y: v.p.y, z: v.p.z};
         let K = a.dot_product(&a)-self.r*self.r-R2;
@@ -124,7 +124,7 @@ impl Geometry3D for Torus{
         }
         return Some(Point {x: v.p.x+v.x*t,y: v.p.y+v.y*t,z: v.p.z+v.z*t});
     }
-    pub fn normal(&self,p: Point) -> Option<Vector> {
+    fn normal(&self,p: Point) -> Option<Vector> {
         let theta: f64;
         let phi: f64;
         match self.theta_phi(p) {
@@ -153,7 +153,7 @@ impl Geometry3D for Torus{
     }
     ///Returns the plane by which the ray can enter the Torus for the first time.
     ///Used for detecting which segment of the fiber the ray is on.
-    pub fn entry_plane(&self) -> Plane {
+    fn entry_plane(&self) -> Plane {
         let xa = (self.R+self.r*f64::cos(0.))*f64::cos(0.);
         let ya = (self.R+self.r*f64::cos(0.))*f64::sin(0.);
         let za = self.r*f64::sin(0.);
@@ -170,7 +170,7 @@ impl Geometry3D for Torus{
     }
     ///Returns the plane by which the ray can exit the Torus for the first time.
     ///Used for detecting which segment of the fiber the ray is on.
-    pub fn exit_plane(&self) -> Plane {
+    fn exit_plane(&self) -> Plane {
         let xa = (self.R+self.r*f64::cos(0.))*f64::cos(self.phi_max);
         let ya = (self.R+self.r*f64::cos(0.))*f64::sin(self.phi_max);
         let za = self.r*f64::sin(0.);
@@ -193,9 +193,9 @@ impl Geometry3D for Torus{
 
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub struct Cylinder {
-    c: Vector,  //"central" vector, alternatively, the "spine" along which the cylinder stretches.
-    r: f64,     //the radius
-    length: f64,//endpoint
+    pub c: Vector,  //"central" vector, alternatively, the "spine" along which the cylinder stretches.
+    pub r: f64,     //the radius
+    pub length: f64,//endpoint
 }
 
 impl Geometry3D for Cylinder{
@@ -208,7 +208,7 @@ impl Geometry3D for Cylinder{
     fn check_collision(&self,v: Vector) -> bool {
         unimplemented!()
     }
-    pub fn collision_point(&self,v: Vector) -> Option<Point> {
+    fn collision_point(&self,v: Vector) -> Option<Point> {
         //This function is disorderly and can probably be simplified.
         //Somehow.
         let t: f64;
@@ -278,23 +278,27 @@ impl Geometry3D for Cylinder{
         }
         return Some(Point {x: v.p.x+v.x*t,y: v.p.y+v.y*t,z: v.p.z+v.z*t});
     }
-    pub fn normal(&self,q: Point) -> Option<Vector> {
+    fn normal(&self,q: Point) -> Option<Vector> {
         //Assuming the point is on the surface...
         //We should actually test for that. TODO.
         let t = (q.x*self.c.x-self.c.p.x*self.c.x
                 +q.y*self.c.y-self.c.p.y*self.c.y
-                +q.z*self.c.z-self.c.p.z*self.c.z-self.r*0.5)
+                +q.z*self.c.z-self.c.p.z*self.c.z)
                 /(self.c.x.powi(2)+self.c.y.powi(2)+self.c.z.powi(2));
-        //You know what? Sanity check.
-        let v = Vector{p: q, x: self.c.x*t,y: self.c.y*t,z: self.c.z*t};
-        if v.length()!=self.r {
-            //If sanity test failed, return nothing
-            return None;
-        }
+        let mut v = Vector{p: q,
+                            x: q.x-self.c.p.x-self.c.x*t,
+                            y: q.y-self.c.p.y-self.c.y*t,
+                            z: q.z-self.c.p.z-self.c.z*t};
+        //sanity check, but commented out because I won't rely on it
+        // if v.length()!=self.r {
+        //     //If sanity test failed, return nothing
+        //     return None;
+        // }
+        v.normalize();
         return Some(v);
     }
     #[allow(unused_variables)]
-    pub fn entry_plane(&self) -> Plane {
+    fn entry_plane(&self) -> Plane {
         //We have the normal.
         //The plane can also be expressed as ax+by+cz+d=0,
         //where a,b,c are the normal.
@@ -319,7 +323,7 @@ impl Geometry3D for Cylinder{
         Plane{a: pa, b: pb, c: pc}
     }
     #[allow(unused_variables)]
-    pub fn exit_plane(&self) -> Plane {
+    fn exit_plane(&self) -> Plane {
         unimplemented!()
     }
 }
@@ -330,9 +334,9 @@ impl Geometry3D for Cylinder{
 
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub struct Cone {
-    c: Vector,  //"central" vector, alternatively, the "spine" along which the cylinder stretches.
-    a: f64,     //Angle between central vector and cone surface
-    length: f64,//endpoint
+    pub c: Vector,  //"central" vector, alternatively, the "spine" along which the cylinder stretches.
+    pub a: f64,     //Angle between central vector and cone surface
+    pub length: f64,//endpoint
 }
 
 impl Geometry3D for Cone{
@@ -344,7 +348,7 @@ impl Geometry3D for Cone{
     fn check_collision(&self,v: Vector) -> bool {
         unimplemented!()
     }
-    pub fn collision_point(&self,v: Vector) -> Option<Point> {
+    fn collision_point(&self,v: Vector) -> Option<Point> {
         //This function is disorderly and can probably be simplified.
         //Somehow.
         let t: f64;
@@ -430,15 +434,15 @@ impl Geometry3D for Cone{
         return Some(Point {x: v.p.x+v.x*t,y: v.p.y+v.y*t,z: v.p.z+v.z*t});
     }
     #[allow(unused_variables)]
-    pub fn normal(&self,p: Point) -> Option<Vector> {
+    fn normal(&self,p: Point) -> Option<Vector> {
         unimplemented!()
     }
     #[allow(unused_variables)]
-    pub fn entry_plane(&self) -> Plane {
+    fn entry_plane(&self) -> Plane {
         unimplemented!()
     }
     #[allow(unused_variables)]
-    pub fn exit_plane(&self) -> Plane {
+    fn exit_plane(&self) -> Plane {
         unimplemented!()
     }
 }
@@ -484,10 +488,16 @@ fn torus_basic_collision() {
 #[test]
 fn cylinder_basic_collision() {
     let ray = Vector {p: Point{x: 5.,y: 0.,z: 0.},x: -1.,y: 0.,z: 0.};
-    let cylinder = Cylinder {c: Vector{p: Point{x: 0.,y: 0., z: 0.},x: 0., y:0., z: 1.}, r: 1.};
+    let cylinder = Cylinder {c: Vector{p: Point{x: 0.,y: 0., z: 0.},x: 0., y:0., z: 1.}, r: 1., length: 4.};
     let point = cylinder.collision_point(ray);
     match point {
         Some(p) => {
+            let v = cylinder.normal(p).unwrap() as Vector;
+
+            assert_eq!(v.x,1.);
+            assert_eq!(v.y,0.);
+            assert_eq!(v.z,0.);
+
             assert_eq!(p.x,1.);
             assert_eq!(p.y,0.);
             assert_eq!(p.z,0.);
@@ -501,7 +511,7 @@ fn cylinder_basic_collision() {
 #[test]
 fn cone_basic_collision() {
     let ray = Vector {p: Point{x: 0.,y: 5.,z: 1.},x: 0.,y: -1.,z: 0.};
-    let cone = Cone {c: Vector{p: Point{x: 0.,y: 0., z: 0.},x: 0., y:0., z: 1.}, a: f64::consts::PI/4.};
+    let cone = Cone {c: Vector{p: Point{x: 0.,y: 0., z: 0.},x: 0., y:0., z: 1.}, a: f64::consts::PI/4., length: 4.};
     let point = cone.collision_point(ray);
     match point {
         Some(p) => {

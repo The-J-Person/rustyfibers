@@ -340,6 +340,19 @@ impl Plane {
         result.p = p;
         return result;
     }
+    pub fn move_along_vector(&mut self, v: Vector, t: f64) {
+        self.a.x=self.a.x+v.x*t;
+        self.a.y=self.a.y+v.y*t;
+        self.a.z=self.a.z+v.z*t;
+
+        self.b.x=self.b.x+v.x*t;
+        self.b.y=self.b.y+v.y*t;
+        self.b.z=self.b.z+v.z*t;
+
+        self.c.x=self.c.x+v.x*t;
+        self.c.y=self.c.y+v.y*t;
+        self.c.z=self.c.z+v.z*t;
+    }
 }
 
 #[test]

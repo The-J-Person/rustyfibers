@@ -5,6 +5,7 @@
 //
 
 use std::env;
+use sim::Wire;
 
 pub fn parse_args(){
     //

@@ -15,6 +15,7 @@ use std::env;
 
 pub mod math;
 pub mod fiber;
+pub mod sim;
 
 fn main() {
     if env::args().count() > 1 {

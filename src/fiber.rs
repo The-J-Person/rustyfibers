@@ -10,11 +10,16 @@ use roots::find_roots_quartic;
 use math::{Point,Vector,Plane};
 use std::f64;
 
-trait Geometry3D {
+pub trait Geometry3D {
     fn point_is_on_surface(&self,p: Point) -> bool;
     fn check_collision(&self,v: Vector) -> bool;
     fn collision_point(&self,v: Vector) -> Option<Point>;
     fn normal(&self,p: Point) -> Option<Vector>;
+    ///Returns the plane by which the ray can enter the structure for the first time.
+    ///Used for detecting which segment of the fiber the ray is on.
+    fn entry_plane(&self) -> Plane;
+    ///Returns the plane by which the ray can exit the structure for the first time.
+    fn exit_plane(&self) -> Plane;
 }
 
 
@@ -53,39 +58,6 @@ impl Torus{
         }
         None
     }
-    ///Returns the plane by which the ray can enter the Torus for the first time.
-    ///Used for detecting which segment of the fiber the ray is on.
-    fn entry_plane(&self) -> Plane {
-        let xa = (self.R+self.r*f64::cos(0.))*f64::cos(0.);
-        let ya = (self.R+self.r*f64::cos(0.))*f64::sin(0.);
-        let za = self.r*f64::sin(0.);
-        //Swapping point b and c is crucial to have a consistent direction for the plane's normal.
-        let xc = (self.R+self.r*f64::cos(f64::consts::PI/2.))*f64::cos(0.);
-        let yc = (self.R+self.r*f64::cos(f64::consts::PI/2.))*f64::sin(0.);
-        let zc = self.r*f64::sin(f64::consts::PI/2.);
-        let xb = (self.R+self.r*f64::cos(f64::consts::PI))*f64::cos(0.);
-        let yb = (self.R+self.r*f64::cos(f64::consts::PI))*f64::sin(0.);
-        let zb = self.r*f64::sin(f64::consts::PI);
-        Plane{a: Point{x: xa, y: ya, z: za},
-            b: Point{x: xb, y: yb, z: zb},
-            c: Point{x: xc, y: yc, z: zc}}
-    }
-    ///Returns the plane by which the ray can exit the Torus for the first time.
-    ///Used for detecting which segment of the fiber the ray is on.
-    fn exit_plane(&self) -> Plane {
-        let xa = (self.R+self.r*f64::cos(0.))*f64::cos(self.phi_max);
-        let ya = (self.R+self.r*f64::cos(0.))*f64::sin(self.phi_max);
-        let za = self.r*f64::sin(0.);
-        let xb = (self.R+self.r*f64::cos(f64::consts::PI/2.))*f64::cos(self.phi_max);
-        let yb = (self.R+self.r*f64::cos(f64::consts::PI/2.))*f64::sin(self.phi_max);
-        let zb = self.r*f64::sin(f64::consts::PI/2.);
-        let xc = (self.R+self.r*f64::cos(f64::consts::PI))*f64::cos(self.phi_max);
-        let yc = (self.R+self.r*f64::cos(f64::consts::PI))*f64::sin(self.phi_max);
-        let zc = self.r*f64::sin(f64::consts::PI);
-        Plane{a: Point{x: xa, y: ya, z: za},
-            b: Point{x: xb, y: yb, z: zb},
-            c: Point{x: xc, y: yc, z: zc}}
-    }
 }
 
 impl Geometry3D for Torus{
@@ -100,7 +72,7 @@ impl Geometry3D for Torus{
         unimplemented!()
     }
     #[allow(non_snake_case)]
-    fn collision_point(&self,v: Vector) -> Option<Point> {
+    pub fn collision_point(&self,v: Vector) -> Option<Point> {
         let R2 = self.R*self.R;
         let a = Vector{p: Point{x: 0.,y: 0.,z: 0.},x: v.p.x, y: v.p.y, z: v.p.z};
         let K = a.dot_product(&a)-self.r*self.r-R2;
@@ -152,7 +124,7 @@ impl Geometry3D for Torus{
         }
         return Some(Point {x: v.p.x+v.x*t,y: v.p.y+v.y*t,z: v.p.z+v.z*t});
     }
-    fn normal(&self,p: Point) -> Option<Vector> {
+    pub fn normal(&self,p: Point) -> Option<Vector> {
         let theta: f64;
         let phi: f64;
         match self.theta_phi(p) {
@@ -179,6 +151,39 @@ impl Geometry3D for Torus{
         v.normalize();
         Some(v)
     }
+    ///Returns the plane by which the ray can enter the Torus for the first time.
+    ///Used for detecting which segment of the fiber the ray is on.
+    pub fn entry_plane(&self) -> Plane {
+        let xa = (self.R+self.r*f64::cos(0.))*f64::cos(0.);
+        let ya = (self.R+self.r*f64::cos(0.))*f64::sin(0.);
+        let za = self.r*f64::sin(0.);
+        //Swapping point b and c is crucial to have a consistent direction for the plane's normal.
+        let xc = (self.R+self.r*f64::cos(f64::consts::PI/2.))*f64::cos(0.);
+        let yc = (self.R+self.r*f64::cos(f64::consts::PI/2.))*f64::sin(0.);
+        let zc = self.r*f64::sin(f64::consts::PI/2.);
+        let xb = (self.R+self.r*f64::cos(f64::consts::PI))*f64::cos(0.);
+        let yb = (self.R+self.r*f64::cos(f64::consts::PI))*f64::sin(0.);
+        let zb = self.r*f64::sin(f64::consts::PI);
+        Plane{a: Point{x: xa, y: ya, z: za},
+            b: Point{x: xb, y: yb, z: zb},
+            c: Point{x: xc, y: yc, z: zc}}
+    }
+    ///Returns the plane by which the ray can exit the Torus for the first time.
+    ///Used for detecting which segment of the fiber the ray is on.
+    pub fn exit_plane(&self) -> Plane {
+        let xa = (self.R+self.r*f64::cos(0.))*f64::cos(self.phi_max);
+        let ya = (self.R+self.r*f64::cos(0.))*f64::sin(self.phi_max);
+        let za = self.r*f64::sin(0.);
+        let xb = (self.R+self.r*f64::cos(f64::consts::PI/2.))*f64::cos(self.phi_max);
+        let yb = (self.R+self.r*f64::cos(f64::consts::PI/2.))*f64::sin(self.phi_max);
+        let zb = self.r*f64::sin(f64::consts::PI/2.);
+        let xc = (self.R+self.r*f64::cos(f64::consts::PI))*f64::cos(self.phi_max);
+        let yc = (self.R+self.r*f64::cos(f64::consts::PI))*f64::sin(self.phi_max);
+        let zc = self.r*f64::sin(f64::consts::PI);
+        Plane{a: Point{x: xa, y: ya, z: za},
+            b: Point{x: xb, y: yb, z: zb},
+            c: Point{x: xc, y: yc, z: zc}}
+    }
 }
 
 
@@ -187,9 +192,10 @@ impl Geometry3D for Torus{
 //
 
 #[derive(PartialEq, Copy, Clone, Debug)]
-struct Cylinder {
+pub struct Cylinder {
     c: Vector,  //"central" vector, alternatively, the "spine" along which the cylinder stretches.
     r: f64,     //the radius
+    length: f64,//endpoint
 }
 
 impl Geometry3D for Cylinder{
@@ -202,7 +208,7 @@ impl Geometry3D for Cylinder{
     fn check_collision(&self,v: Vector) -> bool {
         unimplemented!()
     }
-    fn collision_point(&self,v: Vector) -> Option<Point> {
+    pub fn collision_point(&self,v: Vector) -> Option<Point> {
         //This function is disorderly and can probably be simplified.
         //Somehow.
         let t: f64;
@@ -272,8 +278,48 @@ impl Geometry3D for Cylinder{
         }
         return Some(Point {x: v.p.x+v.x*t,y: v.p.y+v.y*t,z: v.p.z+v.z*t});
     }
+    pub fn normal(&self,q: Point) -> Option<Vector> {
+        //Assuming the point is on the surface...
+        //We should actually test for that. TODO.
+        let t = (q.x*self.c.x-self.c.p.x*self.c.x
+                +q.y*self.c.y-self.c.p.y*self.c.y
+                +q.z*self.c.z-self.c.p.z*self.c.z-self.r*0.5)
+                /(self.c.x.powi(2)+self.c.y.powi(2)+self.c.z.powi(2));
+        //You know what? Sanity check.
+        let v = Vector{p: q, x: self.c.x*t,y: self.c.y*t,z: self.c.z*t};
+        if v.length()!=self.r {
+            //If sanity test failed, return nothing
+            return None;
+        }
+        return Some(v);
+    }
     #[allow(unused_variables)]
-    fn normal(&self,p: Point) -> Option<Vector> {
+    pub fn entry_plane(&self) -> Plane {
+        //We have the normal.
+        //The plane can also be expressed as ax+by+cz+d=0,
+        //where a,b,c are the normal.
+        let d=self.c.x*self.c.p.x+self.c.y*self.c.p.y+self.c.z*self.c.p.z;
+        let pa=self.c.p;
+        let pb: Point;
+        let pc: Point;
+        //With bad rounding, this is an error waiting to happen... TODO add epsilon?
+        if self.c.x!=0. {
+            pb = Point{x: d/self.c.x, y: 0., z: 0.};
+            if self.c.y!=0. {
+                pc = Point{x: 0., y: d/self.c.y, z: 0.};
+            }
+            else {
+                pc = Point{x: 0., y: 0., z: d/self.c.z};
+            }
+        }
+        else {
+            pb = Point{x: 0., y: d/self.c.y, z: 0.};
+            pc = Point{x: 0., y: 0., z: d/self.c.z};
+        }
+        Plane{a: pa, b: pb, c: pc}
+    }
+    #[allow(unused_variables)]
+    pub fn exit_plane(&self) -> Plane {
         unimplemented!()
     }
 }
@@ -283,9 +329,10 @@ impl Geometry3D for Cylinder{
 //
 
 #[derive(PartialEq, Copy, Clone, Debug)]
-struct Cone {
+pub struct Cone {
     c: Vector,  //"central" vector, alternatively, the "spine" along which the cylinder stretches.
     a: f64,     //Angle between central vector and cone surface
+    length: f64,//endpoint
 }
 
 impl Geometry3D for Cone{
@@ -297,7 +344,7 @@ impl Geometry3D for Cone{
     fn check_collision(&self,v: Vector) -> bool {
         unimplemented!()
     }
-    fn collision_point(&self,v: Vector) -> Option<Point> {
+    pub fn collision_point(&self,v: Vector) -> Option<Point> {
         //This function is disorderly and can probably be simplified.
         //Somehow.
         let t: f64;
@@ -383,7 +430,15 @@ impl Geometry3D for Cone{
         return Some(Point {x: v.p.x+v.x*t,y: v.p.y+v.y*t,z: v.p.z+v.z*t});
     }
     #[allow(unused_variables)]
-    fn normal(&self,p: Point) -> Option<Vector> {
+    pub fn normal(&self,p: Point) -> Option<Vector> {
+        unimplemented!()
+    }
+    #[allow(unused_variables)]
+    pub fn entry_plane(&self) -> Plane {
+        unimplemented!()
+    }
+    #[allow(unused_variables)]
+    pub fn exit_plane(&self) -> Plane {
         unimplemented!()
     }
 }

@@ -88,9 +88,11 @@ impl Wire {
         //
 
         //Parallel to the entrance Cone
-        let cone_par_entry = Vector::new_from_points(entry_centerpoint, entry_sidepoint);
+        let mut cone_par_entry = Vector::new_from_points(entry_centerpoint, entry_sidepoint);
+        cone_par_entry.normalize();
         //Parallel to the exit Cone
-        let cone_par_exit = Vector::new_from_points(exit_centerpoint, exit_sidepoint);
+        let mut cone_par_exit = Vector::new_from_points(exit_centerpoint, exit_sidepoint);
+        cone_par_exit.normalize();
         //Center of larger cone circle, entrance side
         let cone_far_ent = Point{x: entry_centerpoint.x+ent_norm.x*C,
                                     y: entry_centerpoint.y+ent_norm.y*C,
@@ -104,9 +106,9 @@ impl Wire {
                                     y: cone_far_ent.y+cone_par_entry.y*r1,
                                     z: cone_far_ent.z+cone_par_entry.z*r1};
         //Side of larger cone circle, exit side
-        let cone_fside_exi = Point{x: cone_far_ent.x+cone_par_exit.x*r1,
-                                    y: cone_far_ent.y+cone_par_exit.y*r1,
-                                    z: cone_far_ent.z+cone_par_exit.z*r1};
+        let cone_fside_exi = Point{x: cone_far_exi.x+cone_par_exit.x*r1,
+                                    y: cone_far_exi.y+cone_par_exit.y*r1,
+                                    z: cone_far_exi.z+cone_par_exit.z*r1};
         //Cone side vectors (the central vector is the plane's normal)
         let cone_svec_ent = Vector::new_from_points(entry_sidepoint, cone_fside_ent);
         let cone_svec_exi = Vector::new_from_points(exit_sidepoint, cone_fside_exi);

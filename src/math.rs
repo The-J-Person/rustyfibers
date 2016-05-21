@@ -91,6 +91,15 @@ impl Vector {
         let t = right.length()/left.length();
         Point {x: self.p.x+self.x*t, y: self.p.y+self.y*t, z: self.p.z+self.z*t}
     }
+    pub fn reflection(&self,normal: &Vector, point: Point) -> Vector {
+        let dot=self.dot_product(&normal);
+        let x = self.x-2.*dot*normal.x;
+        let y = self.y-2.*dot*normal.y;
+        let z = self.z-2.*dot*normal.z;
+        let mut v = Vector {p: point, x: x, y: y, z: z};
+        v.normalize();
+        return v;
+    }
     pub fn multiply_scalar(&mut self, scalar: f64) {
         self.x = self.x*scalar;
         self.y = self.y*scalar;

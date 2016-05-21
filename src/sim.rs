@@ -51,22 +51,10 @@ impl Wire {
         //
 
         if angle>180.+f64::EPSILON {
-            assert!(false,"This software does not handle angles over 180 degrees.");
-            center = Box::new(Cylinder{c: Vector{p: Point{x: 0.,y: -B/2.,z: 0.},x: 0., y: 1., z: 0.}
-                ,r: r2, length: B});
-            entry_centerpoint = Point{x: 0., y: -B/2., z: 0.};
-            entry_sidepoint = Point{x: r2, y: -B/2., z: 0.};
-            exit_centerpoint = Point{x: 0., y: B/2., z: 0.};
-            exit_sidepoint = Point{x: r2, y: B/2., z: 0.};
+            panic!("This software does not handle angles over 180 degrees.");
         }
         else if angle<0. {
-            assert!(false,"This software does not handle negative angles.");
-            center = Box::new(Cylinder{c: Vector{p: Point{x: 0.,y: -B/2.,z: 0.},x: 0., y: 1., z: 0.}
-                ,r: r2, length: B});
-            entry_centerpoint = Point{x: 0., y: -B/2., z: 0.};
-            entry_sidepoint = Point{x: r2, y: -B/2., z: 0.};
-            exit_centerpoint = Point{x: 0., y: B/2., z: 0.};
-            exit_sidepoint = Point{x: r2, y: B/2., z: 0.};
+            panic!("This software does not handle negative angles.");
         }
         else if angle==0. {
             //central tube is a cylinder

@@ -53,9 +53,9 @@ impl Vector {
     pub fn new_blank() -> Vector {
         Vector {p: Point::new_blank(), x: 1., y: 1., z: 1.}
     }
-    // pub fn new(a: Point, b: Point, xn: f64,yn: f64,zn: f64) -> Vector {
-    //     Vector {p: a, x: xn, y: yn, z: zn}
-    // }
+    pub fn new_from_points(a: Point, b: Point) -> Vector {
+        Vector {p: a, x: b.x-a.x, y: b.y-a.y, z: b.z-a.z}
+    }
     pub fn new(a: Point, xn: f64,yn: f64,zn: f64) -> Vector {
         Vector {p: a, x: xn, y: yn, z: zn}
     }
@@ -82,6 +82,14 @@ impl Vector {
         //     self.p.x+self.x,
         //     self.p.y+self.y,
         //     self.p.z+self.z);
+    }
+    pub fn intersect(&self,other: &Vector) -> Point {
+        //Assumes intersection happens, does not check if actually does.
+        let mix = Vector::new_from_points(self.p, other.p);
+        let left = self.cross_product(&other);
+        let right = mix.cross_product(&other);
+        let t = right.length()/left.length();
+        Point {x: self.p.x+self.x*t, y: self.p.y+self.y*t, z: self.p.z+self.z*t}
     }
     pub fn multiply_scalar(&mut self, scalar: f64) {
         self.x = self.x*scalar;

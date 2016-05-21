@@ -297,34 +297,46 @@ impl Geometry3D for Cylinder{
         v.normalize();
         return Some(v);
     }
-    #[allow(unused_variables)]
     fn entry_plane(&self) -> Plane {
         //We have the normal.
-        //The plane can also be expressed as ax+by+cz+d=0,
+        //The plane can also be expressed as ax+by+cz=d,
         //where a,b,c are the normal.
         let d=self.c.x*self.c.p.x+self.c.y*self.c.p.y+self.c.z*self.c.p.z;
         let pa=self.c.p;
         let pb: Point;
-        let pc: Point;
         //With bad rounding, this is an error waiting to happen... TODO add epsilon?
+        // For every flat plane, a point where two axes are zero is contained in it.
         if self.c.x!=0. {
             pb = Point{x: d/self.c.x, y: 0., z: 0.};
-            if self.c.y!=0. {
-                pc = Point{x: 0., y: d/self.c.y, z: 0.};
-            }
-            else {
-                pc = Point{x: 0., y: 0., z: d/self.c.z};
-            }
+        }
+        else if self.c.y!=0. {
+            pb = Point{x: 0., y: d/self.c.y, z: 0.};
         }
         else {
-            pb = Point{x: 0., y: d/self.c.y, z: 0.};
-            pc = Point{x: 0., y: 0., z: d/self.c.z};
+            pb = Point{x: 0., y: 0., z: d/self.c.z};
         }
+        let v = Vector{p: pa, x: pb.x-pa.x, y: pb.y-pa.y, z: pb.z-pa.z};
+        //Cross product between a vector on the plane and the central vector,
+        // gives us another point on the plane.
+        let cp = v.cross_product(&self.c);
+        let pc = Point{x: cp.p.x+cp.x, y: cp.p.y+cp.y, z: cp.p.z+cp.z};
         Plane{a: pa, b: pb, c: pc}
     }
-    #[allow(unused_variables)]
     fn exit_plane(&self) -> Plane {
-        unimplemented!()
+        let mut plane = self.entry_plane();
+        plane.a.x += self.c.x*self.length;
+        plane.a.y += self.c.y*self.length;
+        plane.a.z += self.c.z*self.length;
+
+        plane.b.x += self.c.x*self.length;
+        plane.b.y += self.c.y*self.length;
+        plane.b.z += self.c.z*self.length;
+
+        plane.c.x += self.c.x*self.length;
+        plane.c.y += self.c.y*self.length;
+        plane.c.z += self.c.z*self.length;
+
+        return plane;
     }
 }
 
@@ -334,7 +346,7 @@ impl Geometry3D for Cylinder{
 
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub struct Cone {
-    pub c: Vector,  //"central" vector, alternatively, the "spine" along which the cylinder stretches.
+    pub c: Vector,  //"central" vector, its starting point being the cone's "pointy end"
     pub a: f64,     //Angle between central vector and cone surface
     pub length: f64,//endpoint
 }
@@ -433,9 +445,41 @@ impl Geometry3D for Cone{
         }
         return Some(Point {x: v.p.x+v.x*t,y: v.p.y+v.y*t,z: v.p.z+v.z*t});
     }
-    #[allow(unused_variables)]
     fn normal(&self,p: Point) -> Option<Vector> {
-        unimplemented!()
+        //Assuming point is on the surface
+        let a = p.x;
+        let b = self.c.p.x;
+        let c = self.c.x;
+        let f = p.y;
+        let g = self.c.p.y;
+        let h = self.c.y;
+        let k = p.z;
+        let m = self.c.p.z;
+        let n = self.c.z;
+        let x = (f64::cos(f64::consts::PI/2.-self.a).powi(2) as f32) as f64; //Weird rounding
+        let t: f64;
+
+        let to_root = f64::sqrt(x*(c.powi(2)+h.powi(2)+n.powi(2)-x)*(a.powi(2)*h.powi(2)+a.powi(2)*n.powi(2)-2.*a*b*h.powi(2)-2.*a*b*n.powi(2)-2.*a*c*f*h+2.*a*c*g*h-2.*a*c*k*n+2.*a*c*m*n+b.powi(2)*h.powi(2)+b.powi(2)*n.powi(2)+2.*b*c*f*h-2.*b*c*g*h+2.*b*c*k*n-2.*b*c*m*n+c.powi(2)*f.powi(2)-2.*c.powi(2)*f*g+c.powi(2)*g.powi(2)+c.powi(2)*k.powi(2)-2.*c.powi(2)*k*m+c.powi(2)*m.powi(2)+f.powi(2)*n.powi(2)-2.*f*g*n.powi(2)-2.*f*h*k*n+2.*f*h*m*n+g.powi(2)*n.powi(2)+2.*g*h*k*n-2.*g*h*m*n+h.powi(2)*k.powi(2)-2.*h.powi(2)*k*m+h.powi(2)*m.powi(2)));
+        let top = a*c.powi(3)+a*c*h.powi(2)+a*c*n.powi(2)-a*c*x-b*c.powi(3)-b*c*h.powi(2)-b*c*n.powi(2)+b*c*x+c.powi(2)*f*h-c.powi(2)*g*h+c.powi(2)*k*n-c.powi(2)*m*n+f*h.powi(3)+f*h*n.powi(2)-f*h*x-g*h.powi(3)-g*h*n.powi(2)+g*h*x+h.powi(2)*k*n-h.powi(2)*m*n+k*n.powi(3)-k*n*x-m*n.powi(3)+m*n*x;
+        let bottom = (c.powi(2)+h.powi(2)+n.powi(2))*(c.powi(2)+h.powi(2)+n.powi(2)-x);
+
+        assert!(bottom!=0.,"A cone has a 90 degree angle!");
+
+        let t1=(top+to_root)/bottom;
+        let t2=(top-to_root)/bottom;
+
+        // test area
+        println!("t1 = {:?}", t1);
+        println!("t2 = {:?}", t2);
+        t=t1;
+        // end test area
+
+        let mut v = Vector{p: p,
+                            x: p.x-self.c.p.x-self.c.x*t,
+                            y: p.y-self.c.p.y-self.c.y*t,
+                            z: p.z-self.c.p.z-self.c.z*t};
+        v.normalize();
+        return Some(v);
     }
     #[allow(unused_variables)]
     fn entry_plane(&self) -> Plane {
@@ -492,12 +536,6 @@ fn cylinder_basic_collision() {
     let point = cylinder.collision_point(ray);
     match point {
         Some(p) => {
-            let v = cylinder.normal(p).unwrap() as Vector;
-
-            assert_eq!(v.x,1.);
-            assert_eq!(v.y,0.);
-            assert_eq!(v.z,0.);
-
             assert_eq!(p.x,1.);
             assert_eq!(p.y,0.);
             assert_eq!(p.z,0.);
@@ -506,6 +544,16 @@ fn cylinder_basic_collision() {
             panic!();
         },
     }
+}
+
+#[test]
+fn cylinder_basic_normal() {
+    let cylinder = Cylinder {c: Vector{p: Point{x: 0.,y: 0., z: 0.},x: 0., y:0., z: 1.}, r: 1., length: 4.};
+    let point = Point{x: 1.,y: 0.,z: 0.};
+    let v = cylinder.normal(point).unwrap() as Vector;
+    assert_eq!(v.x,1.);
+    assert_eq!(v.y,0.);
+    assert_eq!(v.z,0.);
 }
 
 #[test]
@@ -525,3 +573,14 @@ fn cone_basic_collision() {
         },
     }
 }
+
+// #[test]
+// fn cone_basic_normal() {
+//     let cone = Cone {c: Vector{p: Point{x: 0.,y: 0., z: 0.},x: 0., y:0., z: 1.}, a: f64::consts::PI/4., length: 4.};
+//     let point = Point{x: 0.,y: 1.,z: 1.};
+//     let v = cone.normal(point).unwrap() as Vector;;
+//     println!("{:?}",v );
+//     assert_eq!(v.x,0.);
+//     assert_eq!(v.y,f64::cos(f64::consts::PI/4.));
+//     assert_eq!(v.z,f64::cos(f64::consts::PI/4.));
+// }

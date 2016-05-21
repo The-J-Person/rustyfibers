@@ -3,13 +3,15 @@
 // Where the simulation itself takes place
 //
 
+extern crate rand;
+
 use fiber::{Geometry3D,Torus,Cylinder,Cone};
 use math::{Point,Vector,Plane};
+use rand::Rng;
 use std::sync::Arc;
 use std::f64;
 
-#[allow(dead_code)]
-pub struct Wire {
+struct Wire {
     n1: f64,
     n2: f64,
     layer_entry: Plane,
@@ -23,6 +25,13 @@ pub struct Wire {
     exit: Cylinder,
     layer_exit: Plane,
     center: Box<Geometry3D>,
+}
+
+enum Progress {
+    Nothing,
+    Advance,
+    Regress,
+    Collide,
 }
 
 impl Wire {
@@ -155,5 +164,141 @@ impl Wire {
             exit: exit,
             layer_exit: exit.exit_plane(),
             center: center,})
+    }
+
+    /// An instance of a simulation
+    /// Each thread runs this, and it is divided into 5 stages, defined by the planes.
+    /// Starting from stage zero, a stage is advanced whenever the ray passes through a layer,
+    /// in the order that they appear, but degrades if the ray passes through a layer it has
+    /// already went through before.
+    pub fn simulate(wire: Arc<Wire>) -> Option<i32> {
+        let mut stage = 0;
+        let mut hits = 0; //Number of hits on inner tube
+        let mut rng = rand::thread_rng();
+        let w = &wire;
+        let start_point = w.entry.c.point_at_t_equals(w.entry.length);
+        //At the current version, the positive starting direction is guaranteed to be y+.
+        //There might be better ways to ensure that the random starting vector is correctly oriented.
+        let mut ray = Vector{p: start_point,
+                        x: rng.gen::<f64>(),
+                        y: f64::abs(rng.gen::<f64>()),
+                        z: rng.gen::<f64>()};
+        ray.normalize();
+        let mut prog: Progress;
+        while stage<5 {
+            match stage {
+                0 => {
+                    prog = Wire::next_location(w.layer_entry, &w.entry, w.layer1, &mut ray);
+                },
+                1 => {
+                    prog = Wire::next_location(w.layer1, &w.entry_connector, w.layer2, &mut ray);
+                },
+                2 => {
+                    prog = Wire::next_location(w.layer2, &(*w.center), w.layer3, &mut ray);
+                },
+                3 => {
+                    prog = Wire::next_location(w.layer3, &w.exit_connector, w.layer4, &mut ray);
+                },
+                4 => {
+                    prog = Wire::next_location(w.layer4, &w.exit, w.layer_exit, &mut ray);
+                },
+                _ => {
+                    panic!("Invalid ray location. The stage reported is {:?}", stage);
+                },
+            }
+            match prog {
+                Progress::Nothing => {
+                //The ray is in limbo
+                    return None;
+                },
+                Progress::Advance => {
+                    stage += 1;
+                },
+                Progress::Regress => {
+                    stage -= 1;
+                },
+                Progress::Collide => {
+                    if stage == 2 {
+                        hits += 1;
+                    }
+                },
+            }
+        }
+        if stage==5 {
+            return Some(hits);
+        }
+        return None;
+    }
+
+    /// Moves the ray to its next location.
+    /// Also changes its direction if there is a collision.
+    fn next_location(layer_back: Plane, part: &Geometry3D, layer_front: Plane, ray: &mut Vector) -> Progress {
+        //Negative values are illegal, so if it persists, there is an error.
+        let mut t = -1.;
+        let mut res = Progress::Nothing;
+        let mut new_point = Point::new_blank();
+        let backward_move = layer_back.intersect(*ray);
+        let forward_move = layer_front.intersect(*ray);
+        let hit_geometry = part.collision_point(*ray);
+        match backward_move {
+            Some(point) => {
+                t=Vector::new_from_points(ray.p, point).length();
+                new_point = point;
+                res = Progress::Regress;
+            }
+            None => {},
+        }
+        match forward_move {
+            Some(point) => {
+                let tc=Vector::new_from_points(ray.p, point).length();
+                if t==-1. {
+                    t = tc;
+                    new_point = point;
+                    res = Progress::Advance;
+                }
+                else if tc<t {
+                    t = tc;
+                    new_point = point;
+                    res = Progress::Advance;
+                }
+            }
+            None => {},
+        }
+        match hit_geometry {
+            Some(point) => {
+                let tc=Vector::new_from_points(ray.p, point).length();
+                if t==-1. {
+                    //t = tc; //Apparently this value is never used, but I guess it is only for comparison...
+                    new_point = point;
+                    res = Progress::Collide;
+                }
+                else if tc<t {
+                    //t = tc;
+                    new_point = point;
+                    res = Progress::Collide;
+                }
+            }
+            None => {},
+        }
+        match res {
+            Progress::Collide => {
+                match part.normal(new_point) {
+                    Some(normal) => {
+                        let nray = ray.reflection(&normal, new_point);
+                        ray.p = nray.p;
+                        ray.x = nray.x;
+                        ray.y = nray.y;
+                        ray.z = nray.z;
+                    },
+                    None => {
+                        panic!("Unable to find Normal vector at ray collision point.");
+                    }
+                }
+            },
+            _ => {
+                ray.p=new_point;
+            },
+        }
+        return res;
     }
 }

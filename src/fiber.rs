@@ -303,18 +303,33 @@ impl Geometry3D for Cylinder{
         //where a,b,c are the normal.
         let d=self.c.x*self.c.p.x+self.c.y*self.c.p.y+self.c.z*self.c.p.z;
         let pa=self.c.p;
-        let pb: Point;
+        let mut pb: Point;
         //With bad rounding, this is an error waiting to happen... TODO add epsilon?
         // For every flat plane, a point where two axes are zero is contained in it.
         if self.c.x!=0. {
             pb = Point{x: d/self.c.x, y: 0., z: 0.};
+            //dirty hack
+            if pb == pa {
+                pb = Point{x: self.c.p.x, y: 1., z: 0.};
+            }
         }
         else if self.c.y!=0. {
             pb = Point{x: 0., y: d/self.c.y, z: 0.};
+            //dirty hack
+            if pb == pa {
+                pb = Point{x: 1., y: self.c.p.y, z: 0.};
+            }
         }
         else {
             pb = Point{x: 0., y: 0., z: d/self.c.z};
+            //dirty hack
+            if pb == pa {
+                pb = Point{x: 1., y: 0., z: self.c.p.z};
+            }
         }
+
+
+
         let v = Vector{p: pa, x: pb.x-pa.x, y: pb.y-pa.y, z: pb.z-pa.z};
         //Cross product between a vector on the plane and the central vector,
         // gives us another point on the plane.
@@ -324,6 +339,7 @@ impl Geometry3D for Cylinder{
     }
     fn exit_plane(&self) -> Plane {
         let mut plane = self.entry_plane();
+        //Really should replace this code with plane.move_along_vector(self.c)...
         plane.a.x += self.c.x*self.length;
         plane.a.y += self.c.y*self.length;
         plane.a.z += self.c.z*self.length;

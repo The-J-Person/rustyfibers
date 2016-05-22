@@ -91,7 +91,7 @@ impl Vector {
         let t = right.length()/left.length();
         Point {x: self.p.x+self.x*t, y: self.p.y+self.y*t, z: self.p.z+self.z*t}
     }
-    pub fn reflection(&self,normal: &Vector, point: Point) -> Vector {
+    pub fn reflection(&self, normal: &Vector, point: Point) -> Vector {
         let dot=self.dot_product(&normal);
         let x = self.x-2.*dot*normal.x;
         let y = self.y-2.*dot*normal.y;
@@ -99,6 +99,9 @@ impl Vector {
         let mut v = Vector {p: point, x: x, y: y, z: z};
         v.normalize();
         return v;
+    }
+    pub fn point_at_t_equals(&self, t: f64) -> Point {
+        Point{x: self.p.x+self.x*t, y: self.p.y+self.y*t, z: self.p.z+self.z*t}
     }
     pub fn multiply_scalar(&mut self, scalar: f64) {
         self.x = self.x*scalar;
@@ -345,13 +348,19 @@ impl Plane {
                 return None;
             }
         }
-        return Some(Point {x: v.p.x+v.x*result[(0,0)],
-                        y: v.p.y+v.y*result[(0,0)],
-                        z: v.p.z+v.z*result[(0,0)]});
+        let t = result[(0,0)];
+        if t<=0.+f64::EPSILON {
+            return None;
+        }
+        return Some(Point {x: v.p.x+v.x*t,
+                        y: v.p.y+v.y*t,
+                        z: v.p.z+v.z*t});
     }
     pub fn normal(&self, p: Point) -> Vector {
         let va = Vector::new(Point::new_blank(),self.b.x-self.a.x,self.b.y-self.a.y,self.b.z-self.a.z);
+        println!("{:?}", va);
         let vb = Vector::new(Point::new_blank(),self.c.x-self.a.x,self.c.y-self.a.y,self.c.z-self.a.z);
+        println!("{:?}", vb);
         let mut result = va.cross_product(&vb);
         result.normalize();
         result.p = p;

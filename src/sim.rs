@@ -9,6 +9,7 @@ use fiber::{Geometry3D,Torus,Cylinder,Cone};
 use math::{Point,Vector,Plane};
 use rand::Rng;
 use std::sync::Arc;
+use std::thread;
 use std::f64;
 
 struct Wire {
@@ -24,7 +25,7 @@ struct Wire {
     layer4: Plane,
     exit: Cylinder,
     layer_exit: Plane,
-    center: Box<Geometry3D>,
+    center: Box<Geometry3D + Send + Sync>,
 }
 
 enum Progress {
@@ -49,7 +50,7 @@ impl Wire {
     pub fn generate(A: f64, B: f64, C: f64,
                     n1: f64, n2: f64, r1: f64, r2: f64, angle: f64) ->  Arc<Wire>{
 
-        let center: Box<Geometry3D>;
+        let center: Box<Geometry3D + Send + Sync>;
         let entry_centerpoint: Point;
         let exit_centerpoint: Point;
         let entry_sidepoint: Point;
@@ -86,11 +87,20 @@ impl Wire {
             exit_centerpoint = Point{x: R*f64::cos(phi_max), y: R*f64::sin(phi_max), z: 0.};
             exit_sidepoint = Point{x: (R-r2)*f64::cos(phi_max), y: (R-r2)*f64::sin(phi_max), z: 0.};
         }
+
+
+
         let layer2 = (*center).entry_plane();
         let layer3 = (*center).exit_plane();
 
+        println!("{:?}", layer2);
+        println!("{:?}", layer3);
+
         let ent_norm = layer2.normal(entry_centerpoint);
         let exi_norm = layer3.normal(exit_centerpoint);
+
+        println!("normal to plane entry: {:?}", ent_norm);
+        println!("normal to plane exit: {:?}", exi_norm);
 
         //
         // Cone construction
@@ -171,11 +181,11 @@ impl Wire {
     /// Starting from stage zero, a stage is advanced whenever the ray passes through a layer,
     /// in the order that they appear, but degrades if the ray passes through a layer it has
     /// already went through before.
-    pub fn simulate(wire: Arc<Wire>) -> Option<i32> {
+    pub fn simulate(&self) -> Option<i32> {
         let mut stage = 0;
         let mut hits = 0; //Number of hits on inner tube
         let mut rng = rand::thread_rng();
-        let w = &wire;
+        let w = &self;
         let start_point = w.entry.c.point_at_t_equals(w.entry.length);
         //At the current version, the positive starting direction is guaranteed to be y+.
         //There might be better ways to ensure that the random starting vector is correctly oriented.
@@ -185,8 +195,20 @@ impl Wire {
                         z: rng.gen::<f64>()};
         ray.normalize();
         let mut prog: Progress;
+
+        println!("The start point is :{:?}", start_point);
+        println!("The entry's data is: {:?}", w.entry);
+
         while stage<5 {
+
+            println!("Ray location: {:?}", ray);
+            println!("At stage: {:?}", stage);
+
             match stage {
+                -1 => {
+                    //We passed through the entrance so we went back
+                    return None;
+                }
                 0 => {
                     prog = Wire::next_location(w.layer_entry, &w.entry, w.layer1, &mut ray);
                 },
@@ -301,4 +323,39 @@ impl Wire {
         }
         return res;
     }
+}
+
+pub fn simulation(out_len: f64, in_len: f64, cone_len: f64, n1: f64, n2: f64, out_rad: f64,
+                    in_rad: f64, angle: f64, thread_amount: i32, output_to_console: bool)
+                    -> Vec<Option<i32>> {
+    let w = Wire::generate(out_len,in_len,cone_len,n1,n2,out_rad,in_rad,angle);
+    let mut results : Vec<Option<i32>> = vec![];
+    let mut children = vec![];
+    for _ in 0..thread_amount {
+        let wc = w.clone();
+        children.push(thread::spawn(move || {
+            wc.simulate()
+        }));
+    }
+    for child in children {
+        match child.join() {
+            Ok(result) => {
+                results.push(result);
+                if output_to_console {
+                    match result {
+                        Some(amount) => {
+                            println!("Success with {:?} hits!", amount);
+                        }
+                        None => {
+                            println!("Failure occurred.");
+                        }
+                    }
+                }
+            },
+            Err(_) => {
+                results.push(None);
+            },
+        }
+    }
+    results
 }

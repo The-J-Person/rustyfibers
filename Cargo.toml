@@ -1,11 +1,12 @@
 [package]
 name = "raytracer"
-version = "0.0.2"
+version = "0.0.4"
 authors = ["J"]
 
 [dependencies]
 roots = "^0" # crate for various mathematical functions
 nalgebra = "^0" # matrix calculations
+rand = "^0" # random number generation
 
 gtk = "^0" # GUI
 

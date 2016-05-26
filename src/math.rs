@@ -88,7 +88,8 @@ impl Vector {
         let mix = Vector::new_from_points(self.p, other.p);
         let left = self.cross_product(&other);
         let right = mix.cross_product(&other);
-        let t = right.length()/left.length();
+        // let t = right.length()/left.length();
+        let t = right.dot_product(&left)/(left.length().powi(2));
         Point {x: self.p.x+self.x*t, y: self.p.y+self.y*t, z: self.p.z+self.z*t}
     }
     pub fn reflection(&self, normal: &Vector, point: Point) -> Vector {
@@ -358,9 +359,7 @@ impl Plane {
     }
     pub fn normal(&self, p: Point) -> Vector {
         let va = Vector::new(Point::new_blank(),self.b.x-self.a.x,self.b.y-self.a.y,self.b.z-self.a.z);
-        println!("{:?}", va);
         let vb = Vector::new(Point::new_blank(),self.c.x-self.a.x,self.c.y-self.a.y,self.c.z-self.a.z);
-        println!("{:?}", vb);
         let mut result = va.cross_product(&vb);
         result.normalize();
         result.p = p;

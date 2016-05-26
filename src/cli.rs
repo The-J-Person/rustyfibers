@@ -6,16 +6,14 @@
 
 use std::env;
 use sim::simulation;
-
-// pub fn simulation(out_len: f64, in_len: f64, cone_len: f64, n1: f64, n2: f64, out_rad: f64,
-//                     in_rad: f64, angle: f64, thread_amount: i32, output_to_console: bool)
+use time;
 
 pub fn parse_args(){
     let mut valid = true;
     let will_print: bool;
     let mut clargs = vec![];
+    let start = time::PreciseTime::now();
     for argument in env::args() {
-        // Here we want to actually parse the CL arguments and not print them
         let n = argument.parse::<f64>();
         match n {
             Ok(num) => {
@@ -38,7 +36,7 @@ pub fn parse_args(){
         else {
             will_print = false;
         }
-        simulation(clargs[0],
+        let results = simulation(clargs[0],
                     clargs[1],
                     clargs[2],
                     clargs[3],
@@ -48,6 +46,23 @@ pub fn parse_args(){
                     clargs[7],
                     clargs[8] as i32,
                     will_print);
+        let mut fails = 0;
+        let mut avg_successes = 0.;
+        for result in results {
+            match result {
+                Some(hits) => {
+                    avg_successes += hits as f64;
+                },
+                None => {
+                    fails += 1;
+                }
+            }
+        }
+        avg_successes = avg_successes/(clargs[8]-fails as f64);
+        println!("{} rays passed through the fiber.",(clargs[8] as i32)-fails);
+        println!("{} rays returned to fiber entrance or got lost", fails);
+        println!("{} is the average number of hits among successful passes", avg_successes);
+        println!("{:?} execution time", (start.to(time::PreciseTime::now())) );
     }
     else {
         print_help();

@@ -9,6 +9,7 @@ extern crate gtk;
 extern crate roots;
 extern crate rand;
 extern crate nalgebra;
+extern crate time;
 
 pub mod gui;
 pub mod cli;

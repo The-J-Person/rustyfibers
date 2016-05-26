@@ -7,6 +7,7 @@ authors = ["J"]
 roots = "^0" # crate for various mathematical functions
 nalgebra = "^0" # matrix calculations
 rand = "^0" # random number generation
+time = "^0" # for benchmarking
 
 gtk = "^0" # GUI
 

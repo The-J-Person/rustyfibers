@@ -154,16 +154,15 @@ impl Geometry3D for Torus{
     ///Returns the plane by which the ray can enter the Torus for the first time.
     ///Used for detecting which segment of the fiber the ray is on.
     fn entry_plane(&self) -> Plane {
-        let xa = (self.R+self.r*f64::cos(0.))*f64::cos(0.);
-        let ya = (self.R+self.r*f64::cos(0.))*f64::sin(0.);
-        let za = self.r*f64::sin(0.);
-        //Swapping point b and c is crucial to have a consistent direction for the plane's normal.
+        let xb = (self.R+self.r*f64::cos(0.))*f64::cos(0.);
+        let yb = (self.R+self.r*f64::cos(0.))*f64::sin(0.);
+        let zb = self.r*f64::sin(0.);
         let xc = (self.R+self.r*f64::cos(f64::consts::PI/2.))*f64::cos(0.);
         let yc = (self.R+self.r*f64::cos(f64::consts::PI/2.))*f64::sin(0.);
         let zc = self.r*f64::sin(f64::consts::PI/2.);
-        let xb = (self.R+self.r*f64::cos(f64::consts::PI))*f64::cos(0.);
-        let yb = (self.R+self.r*f64::cos(f64::consts::PI))*f64::sin(0.);
-        let zb = self.r*f64::sin(f64::consts::PI);
+        let xa = (self.R+self.r*f64::cos(f64::consts::PI))*f64::cos(0.);
+        let ya = (self.R+self.r*f64::cos(f64::consts::PI))*f64::sin(0.);
+        let za = self.r*f64::sin(f64::consts::PI);
         Plane{a: Point{x: xa, y: ya, z: za},
             b: Point{x: xb, y: yb, z: zb},
             c: Point{x: xc, y: yc, z: zc}}
@@ -171,15 +170,15 @@ impl Geometry3D for Torus{
     ///Returns the plane by which the ray can exit the Torus for the first time.
     ///Used for detecting which segment of the fiber the ray is on.
     fn exit_plane(&self) -> Plane {
-        let xa = (self.R+self.r*f64::cos(0.))*f64::cos(self.phi_max);
-        let ya = (self.R+self.r*f64::cos(0.))*f64::sin(self.phi_max);
-        let za = self.r*f64::sin(0.);
+        let xc = (self.R+self.r*f64::cos(0.))*f64::cos(self.phi_max);
+        let yc = (self.R+self.r*f64::cos(0.))*f64::sin(self.phi_max);
+        let zc = self.r*f64::sin(0.);
         let xb = (self.R+self.r*f64::cos(f64::consts::PI/2.))*f64::cos(self.phi_max);
         let yb = (self.R+self.r*f64::cos(f64::consts::PI/2.))*f64::sin(self.phi_max);
         let zb = self.r*f64::sin(f64::consts::PI/2.);
-        let xc = (self.R+self.r*f64::cos(f64::consts::PI))*f64::cos(self.phi_max);
-        let yc = (self.R+self.r*f64::cos(f64::consts::PI))*f64::sin(self.phi_max);
-        let zc = self.r*f64::sin(f64::consts::PI);
+        let xa = (self.R+self.r*f64::cos(f64::consts::PI))*f64::cos(self.phi_max);
+        let ya = (self.R+self.r*f64::cos(f64::consts::PI))*f64::sin(self.phi_max);
+        let za = self.r*f64::sin(f64::consts::PI);
         Plane{a: Point{x: xa, y: ya, z: za},
             b: Point{x: xb, y: yb, z: zb},
             c: Point{x: xc, y: yc, z: zc}}
@@ -339,7 +338,6 @@ impl Geometry3D for Cylinder{
     }
     fn exit_plane(&self) -> Plane {
         let mut plane = self.entry_plane();
-        //Really should replace this code with plane.move_along_vector(self.c)...
         plane.a.x += self.c.x*self.length;
         plane.a.y += self.c.y*self.length;
         plane.a.z += self.c.z*self.length;
@@ -351,6 +349,10 @@ impl Geometry3D for Cylinder{
         plane.c.x += self.c.x*self.length;
         plane.c.y += self.c.y*self.length;
         plane.c.z += self.c.z*self.length;
+
+        let temp = plane.b;
+        plane.b = plane.c;
+        plane.c = temp;
 
         return plane;
     }
@@ -485,8 +487,8 @@ impl Geometry3D for Cone{
         let t2=(top-to_root)/bottom;
 
         // test area
-        println!("t1 = {:?}", t1);
-        println!("t2 = {:?}", t2);
+        // println!("t1 = {:?}", t1);
+        // println!("t2 = {:?}", t2);
         t=t1;
         // end test area
 

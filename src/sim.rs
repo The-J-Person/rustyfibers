@@ -40,8 +40,8 @@ impl Wire {
     /// A -     length of outer tubes
     /// B -     length of inner tube
     /// C -     length of the interconnecting tube-cones
-    /// n1 -    outer index of refraction
-    /// n2 -    inner index of refraction
+    /// n1 -    inner index of refraction
+    /// n2 -    outer index of refraction
     /// r1 -    outer tube radius
     /// r2 -    inner tube radius
     /// angle - angle of the inner tube's bend, between 0 and 180 degrees.
@@ -182,6 +182,8 @@ impl Wire {
     /// in the order that they appear, but degrades if the ray passes through a layer it has
     /// already went through before.
     pub fn simulate(&self) -> Option<i32> {
+        let mut collisions_in_s2 = 0;
+        let mut steps = 0;
         let mut stage = 0;
         let mut hits = 0; //Number of hits on inner tube
         let mut rng = rand::thread_rng();
@@ -196,13 +198,16 @@ impl Wire {
         ray.normalize();
         let mut prog: Progress;
 
-        println!("The start point is :{:?}", start_point);
-        println!("The entry's data is: {:?}", w.entry);
+        //println!("The start point is :{:?}", start_point);
+        //println!("The entry's data is: {:?}", w.entry);
 
         while stage<5 {
-
-            println!("Ray location: {:?}", ray);
-            println!("At stage: {:?}", stage);
+            steps += 1;
+            if steps > 10000 {
+                return None;
+            }
+            //println!("Ray location: {:?}", ray);
+            //println!("At stage: {:?}", stage);
 
             match stage {
                 -1 => {
@@ -241,14 +246,32 @@ impl Wire {
                 },
                 Progress::Collide => {
                     if stage == 2 {
-                        hits += 1;
+                        collisions_in_s2 += 1;
+                        let n = self.center.normal(ray.p);
+                        match n {
+                            Some(vector) => {
+                                let mut vec_clone = vector;
+                                let ang = vec_clone.angle(&mut ray);
+                                let crit_ang = f64::asin(self.n2/self.n1);
+                                //println!("hit angle: {:?}", ang);
+                                //println!("critical angle: {:?}", crit_ang);
+                                if ang>=crit_ang {
+                                    hits += 1;
+                                }
+                            },
+                            None => {
+                                panic!("Unable to get surface normal.");
+                            }
+                        }
                     }
                 },
             }
         }
         if stage==5 {
+            // println!("collisions in s2: {:?}", collisions_in_s2 );
             return Some(hits);
         }
+        // println!("collisions in s2: {:?}", collisions_in_s2);
         return None;
     }
 
@@ -344,10 +367,10 @@ pub fn simulation(out_len: f64, in_len: f64, cone_len: f64, n1: f64, n2: f64, ou
                 if output_to_console {
                     match result {
                         Some(amount) => {
-                            println!("Success with {:?} hits!", amount);
+                            // println!("Success with {:?} hits!", amount);
                         }
                         None => {
-                            println!("Failure occurred.");
+                            // println!("Failure occurred.");
                         }
                     }
                 }

@@ -10,6 +10,19 @@ use roots::find_roots_quartic;
 use math::{Point,Vector,Plane};
 use std::f64;
 
+pub trait Approximable {
+    fn approx(&self, other: f64) -> bool;
+}
+
+impl Approximable for f64 {
+    fn approx(&self, other: f64) -> bool {
+        if self+f64::EPSILON>other && self-f64::EPSILON<other {
+            return true;
+        }
+        false
+    }
+}
+
 pub trait Geometry3D {
     fn point_is_on_surface(&self,p: Point) -> bool;
     fn check_collision(&self,v: Vector) -> bool;
@@ -69,7 +82,10 @@ impl Geometry3D for Torus{
     }
     #[allow(unused_variables)]
     fn check_collision(&self,v: Vector) -> bool {
-        unimplemented!()
+        if self.collision_point(v) != None {
+            return true;
+        }
+        false
     }
     #[allow(non_snake_case)]
     fn collision_point(&self,v: Vector) -> Option<Point> {
@@ -201,7 +217,12 @@ impl Geometry3D for Cylinder{
     #[allow(unused_variables)]
     fn point_is_on_surface(&self,p: Point) -> bool {
         //let x = ( p.x - self.c.p.x - (self.c.x*p.x-self.c.p.x)*self.c.x).powi(2)-self.r.powi(2);
-        unimplemented!()
+        let cp  = self.c.cross_product(&Vector::new_from_points(p, self.c.p));
+        let result = cp.length()/self.c.length();
+        if result.approx(self.r) {
+            return true;
+        }
+        false
     }
     #[allow(unused_variables)]
     fn check_collision(&self,v: Vector) -> bool {

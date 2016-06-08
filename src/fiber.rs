@@ -214,7 +214,6 @@ pub struct Cylinder {
 }
 
 impl Geometry3D for Cylinder{
-    #[allow(unused_variables)]
     fn point_is_on_surface(&self,p: Point) -> bool {
         //let x = ( p.x - self.c.p.x - (self.c.x*p.x-self.c.p.x)*self.c.x).powi(2)-self.r.powi(2);
         let cp  = self.c.cross_product(&Vector::new_from_points(p, self.c.p));
@@ -391,9 +390,14 @@ pub struct Cone {
 }
 
 impl Geometry3D for Cone{
-    #[allow(unused_variables)]
     fn point_is_on_surface(&self,p: Point) -> bool {
-        unimplemented!()
+        let helper = Vector::new_from_points(self.c.p, p);
+        let dot = helper.dot_product(&self.c);
+        let ang = f64::acos(dot/(self.c.length()*helper.length()));
+        if ang.approx(self.a) {
+            return true;
+        }
+        false
     }
     #[allow(unused_variables)]
     fn check_collision(&self,v: Vector) -> bool {
